@@ -1,15 +1,16 @@
 import pandas as pd 
 import seaborn as sns
 import numpy as np
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import matplotlib.pyplot as plt
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
 
 
-SEED = 20
+SEED = 5
+np.random.seed(SEED)
 
-model = LinearSVC()
 
 uri= 'https://gist.githubusercontent.com/guilhermesilveira/1b7d5475863c15f484ac495bd70975cf/raw/16aff7a0aee67e7c100a2a48b676a2d2d142f646/projects.csv'
 
@@ -33,22 +34,29 @@ print(tail)
 x = datas[['expected_hours', 'price']]
 y = datas['finished']
 
-trainX, testX, trainY, testY = train_test_split(x, y, random_state = SEED, test_size = 0.25, stratify = y)
+rawTrainX, rawTestX, trainY, testY = train_test_split(x, y, test_size = 0.25, stratify = y)
 
+scaler = StandardScaler()
+scaler.fit(rawTrainX)
+trainX = scaler.transform(rawTrainX)
+testX = scaler.transform(rawTestX)
+
+model = SVC(gamma='auto')
 model.fit(trainX, trainY)
-
 predictions = model.predict(testX)
-
 accuracyScore = accuracy_score(testY, predictions)
 print("The accuracy was: %.2f " % (accuracyScore * 100))
 
 #sns.relplot(data = testX, x = "expected_hours", y = "price", hue = testY)
 #plt.show()
 
-xMin = testX.expected_hours.min()
-xMax = testX.expected_hours.max()
-yMin = testX.price.min()
-yMax = testX.price.max()
+dataX = testX[:, 0]
+dataY = testX[:, 1]
+
+xMin = dataX.min()
+xMax = dataX.max()
+yMin = dataY.min()
+yMax = dataY.max()
 print(xMin, xMax, yMin, yMax)
 
 pixels = 100
@@ -66,5 +74,5 @@ z = z.reshape(xx.shape)
 print(z)
 
 plt.contourf(xx,yy, z, alpha = 0.3)
-plt.scatter(testX.expected_hours, testX.price, c = testY, s=1)
+plt.scatter(dataX, dataY, c = testY, s=1)
 plt.show()
